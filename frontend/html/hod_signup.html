@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOD Sign Up - Student Performance Predictor</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/forms.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <a href="/" class="btn-small">Back Home</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2>👔 HOD Registration</h2>
+                <p>Create your HOD account</p>
+
+                <form id="hodSignupForm">
+                    <div class="form-group">
+                        <label for="hodName">Full Name *</label>
+                        <input type="text" id="hodName" name="name" placeholder="Enter your name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hodUsername">Username *</label>
+                        <input type="text" id="hodUsername" name="username" placeholder="Create a username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hodEmail">Email *</label>
+                        <input type="email" id="hodEmail" name="email" placeholder="your.email@college.edu" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hodDept">Department (HOD of) *</label>
+                        <select id="hodDept" name="department" required>
+                            <option value="">-- Select Department --</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Mechanical">Mechanical</option>
+                            <option value="Civil">Civil</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Chemical">Chemical</option>
+                            <option value="Biotechnology">Biotechnology</option>
+                            <option value="Information Technology">Information Technology</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hodPassword">Password *</label>
+                        <input type="password" id="hodPassword" name="password" placeholder="Create a strong password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hodConfirmPassword">Confirm Password *</label>
+                        <input type="password" id="hodConfirmPassword" name="confirm_password" placeholder="Re-enter password" required>
+                    </div>
+
+                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+                    <div id="successMessage" class="success-message" style="display: none;"></div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Create HOD Account</button>
+                </form>
+
+                <p class="auth-link">
+                    Already have an account? <a href="/hod/login">Login here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <script src="/js/common.js"></script>
+    <script>
+        document.getElementById('hodSignupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('hodName').value;
+            const username = document.getElementById('hodUsername').value;
+            const email = document.getElementById('hodEmail').value;
+            const department = document.getElementById('hodDept').value;
+            const password = document.getElementById('hodPassword').value;
+            const confirmPassword = document.getElementById('hodConfirmPassword').value;
+
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+
+            // Validation
+            if (!name || !username || !email || !department || !password || !confirmPassword) {
+                errorDiv.textContent = 'All fields are required!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (password.length < 6) {
+                errorDiv.textContent = 'Password must be at least 6 characters long!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Send signup request
+            fetch('/api/auth/hod/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    username: username,
+                    email: email,
+                    department: department,
+                    password: password
+                }),
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                } else {
+                    successDiv.textContent = 'Account created successfully! Redirecting to login...';
+                    successDiv.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/hod/login';
+                    }, 1500);
+                }
+            })
+            .catch(error => {
+                errorDiv.textContent = 'An error occurred: ' + error;
+                errorDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

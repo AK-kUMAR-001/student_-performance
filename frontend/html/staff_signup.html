@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Sign Up - Student Performance Predictor</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/forms.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <a href="/" class="btn-small">Back Home</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2>👨‍💼 Staff Registration</h2>
+                <p>Create your staff account</p>
+
+                <form id="staffSignupForm">
+                    <div class="form-group">
+                        <label for="staffName">Full Name *</label>
+                        <input type="text" id="staffName" name="name" placeholder="Enter your name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="staffUsername">Username *</label>
+                        <input type="text" id="staffUsername" name="username" placeholder="Create a username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="staffEmail">Email *</label>
+                        <input type="email" id="staffEmail" name="email" placeholder="your.email@college.edu" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="staffDept">Department *</label>
+                        <select id="staffDept" name="department" required>
+                            <option value="">-- Select Department --</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Mechanical">Mechanical</option>
+                            <option value="Civil">Civil</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Chemical">Chemical</option>
+                            <option value="Biotechnology">Biotechnology</option>
+                            <option value="Information Technology">Information Technology</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="staffPassword">Password *</label>
+                        <input type="password" id="staffPassword" name="password" placeholder="Create a strong password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="staffConfirmPassword">Confirm Password *</label>
+                        <input type="password" id="staffConfirmPassword" name="confirm_password" placeholder="Re-enter password" required>
+                    </div>
+
+                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+                    <div id="successMessage" class="success-message" style="display: none;"></div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Create Staff Account</button>
+                </form>
+
+                <p class="auth-link">
+                    Already have an account? <a href="/staff/login">Login here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <script src="/js/common.js"></script>
+    <script>
+        document.getElementById('staffSignupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('staffName').value;
+            const username = document.getElementById('staffUsername').value;
+            const email = document.getElementById('staffEmail').value;
+            const department = document.getElementById('staffDept').value;
+            const password = document.getElementById('staffPassword').value;
+            const confirmPassword = document.getElementById('staffConfirmPassword').value;
+
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+
+            // Validation
+            if (!name || !username || !email || !department || !password || !confirmPassword) {
+                errorDiv.textContent = 'All fields are required!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (password.length < 6) {
+                errorDiv.textContent = 'Password must be at least 6 characters long!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Send signup request
+            fetch('/api/auth/staff/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    username: username,
+                    email: email,
+                    department: department,
+                    password: password
+                }),
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                } else {
+                    successDiv.textContent = 'Account created successfully! Redirecting to login...';
+                    successDiv.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/staff/login';
+                    }, 1500);
+                }
+            })
+            .catch(error => {
+                errorDiv.textContent = 'An error occurred: ' + error;
+                errorDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

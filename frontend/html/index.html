@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Predictor - Home</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <ul class="navbar-menu" id="navbarMenu">
+                <li><a href="#" id="navLogout" style="display: none;">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <h2>Welcome to Student Performance Prediction System</h2>
+            <p>Predict your academic performance based on marks, attendance, and assignments</p>
+        </div>
+
+        <div class="login-options">
+            <div class="login-card">
+                <div class="login-icon">👨‍🎓</div>
+                <h3>Student</h3>
+                <p>Enter your marks and predict your performance</p>
+                <a href="/student/login" class="btn btn-primary">Student Login</a>
+                <p class="small-text">or <a href="/student/signup">Sign Up</a></p>
+            </div>
+
+            <div class="login-card">
+                <div class="login-icon">👨‍💼</div>
+                <h3>Staff</h3>
+                <p>Monitor student performance and records</p>
+                <a href="/staff/login" class="btn btn-secondary">Staff Login</a>
+                <p class="small-text">or <a href="/staff/signup">Sign Up</a></p>
+            </div>
+
+            <div class="login-card">
+                <div class="login-icon">👔</div>
+                <h3>HOD</h3>
+                <p>Department-level oversight and analytics</p>
+                <a href="/hod/login" class="btn btn-tertiary">HOD Login</a>
+                <p class="small-text">or <a href="/hod/signup">Sign Up</a></p>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3>How It Works</h3>
+            <ol>
+                <li><strong>Enter Your Data:</strong> Input marks, attendance, and assignment scores for each subject</li>
+                <li><strong>Get Prediction:</strong> Our AI model predicts your performance</li>
+                <li><strong>Upload Profile:</strong> (Optional) Upload certifications and competition details</li>
+                <li><strong>Review Results:</strong> View your performance history and academic profile</li>
+            </ol>
+        </div>
+
+       
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor | Academic Excellence System</p>
+    </footer>
+
+    <script src="/js/common.js"></script>
+    <script>
+        // Check if user is already logged in
+        checkUserSession();
+    </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Entry - Student Performance Predictor</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <a href="/student/dashboard" class="btn-small">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="form-wrapper">
+            <h2>Semester Mark Entry</h2>
+            
+            <div class="form-group">
+                <label for="semesterSelect">Select Semester *</label>
+                <select id="semesterSelect">
+                    <option value="">-- Select Semester --</option>
+                    <option value="1" selected>Semester 1</option>
+                    <option value="2">Semester 2</option>
+                    <option value="3">Semester 3</option>
+                    <option value="4">Semester 4</option>
+                    <option value="5">Semester 5</option>
+                    <option value="6">Semester 6</option>
+                </select>
+            </div>
+
+            <div id="marksForm" style="display: none;">
+                <h3>Semester <span id="semesterTitle">-</span> Marks Entry</h3>
+                
+                <div id="subjectsContainer">
+                    <!-- Subjects will be added here dynamically -->
+                </div>
+
+                <button type="button" id="addSubjectBtn" class="btn btn-secondary">+ Add Subject</button>
+
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <div id="successMessage" class="success-message" style="display: none;"></div>
+
+                <button type="button" id="saveSemesterBtn" class="btn btn-primary btn-block">Save Semester Marks</button>
+            </div>
+        </div>
+
+        <div class="marks-history">
+            <h3>Marks History</h3>
+            <div id="historyContent">
+                <p>No marks entered yet</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <script src="/js/common.js?v=2"></script>
+    <script src="/js/marks_entry.js?v=3"></script>
+</body>
+</html>

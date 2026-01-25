@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOD Dashboard - Student Performance Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/table.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <ul class="navbar-menu">
+                <li><button class="theme-toggle" onclick="toggleTheme()"><span id="themeIcon">🌙</span> Theme</button></li>
+                <li><span id="hodName">HOD</span></li>
+                <li><a href="#" id="navLogout">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>HOD Dashboard - Department Overview</h2>
+
+        <div class="stats-section">
+            <h3>Department Statistics</h3>
+            
+            <div class="charts-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div style="height: 300px;">
+                    <canvas id="deptChart"></canvas>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Students</h4>
+                    <p id="totalStudents" class="stat-value">-</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Average Score</h4>
+                    <p id="avgScore" class="stat-value">-</p>
+                </div>
+                <div class="stat-card good">
+                    <h4>Good Performance</h4>
+                    <p id="goodCount" class="stat-value">-</p>
+                </div>
+                <div class="stat-card average">
+                    <h4>Average Performance</h4>
+                    <p id="avgCount" class="stat-value">-</p>
+                </div>
+                <div class="stat-card risk">
+                    <h4>At-Risk Performance</h4>
+                    <p id="riskCount" class="stat-value">-</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h3>Filter Students</h3>
+            <div class="filter-group">
+                <select id="yearFilter">
+                    <option value="">All Years</option>
+                    <option value="1">Year 1</option>
+                    <option value="2">Year 2</option>
+                    <option value="3">Year 3</option>
+                </select>
+                <select id="deptFilter">
+                    <option value="">All Departments</option>
+                </select>
+                <button type="button" id="filterBtn" class="btn btn-secondary">Apply Filter</button>
+                <button type="button" onclick="exportTableToCSV('student_report.csv')" class="btn btn-primary">Export CSV</button>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>Student Performance Records</h3>
+            <div id="studentTableContainer">
+                <p class="loading">Loading student data...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Details Modal -->
+    <div id="studentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalStudentName">Student Details</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="modalStudentBody">
+                <p class="loading">Loading details...</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('studentModal').style.display='none'">Close</button>
+                <button class="btn btn-primary" onclick="printStudentDetails()">Print Details</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Viewer Modal -->
+    <div id="fileViewerModal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3 id="fileModalTitle">View File</h3>
+                <span class="close-file">&times;</span>
+            </div>
+            <div class="modal-body" id="fileModalBody">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('fileViewerModal').style.display='none'">Close</button>
+                <button class="btn btn-primary" onclick="printFile()">Print File</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <script src="/js/common.js"></script>
+    <script>
+        // Global data for printing
+        let currentStudentData = null;
+        let currentFileContent = null;
+
+        function loadStats() {
+            fetch('/api/staff/department-stats', {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    document.getElementById('totalStudents').textContent = data.total_students;
+                    document.getElementById('avgScore').textContent = data.average_score;
+                    document.getElementById('goodCount').textContent = data.performance_distribution.good;
+                    document.getElementById('avgCount').textContent = data.performance_distribution.average;
+                    document.getElementById('riskCount').textContent = data.performance_distribution.at_risk;
+                    
+                    // Populate Department Filter
+                    const deptSelect = document.getElementById('deptFilter');
+                    deptSelect.innerHTML = '<option value="">All Departments</option>';
+                    
+                    // Display Department Stats
+                    let deptHtml = '<div class="dept-stats-container"><h3>Department Performance Ranking</h3><div class="stats-grid">';
+                    
+                    data.department_breakdown.forEach((dept, index) => {
+                        // Add to filter
+                        const option = document.createElement('option');
+                        option.value = dept.department;
+                        option.textContent = dept.department;
+                        deptSelect.appendChild(option);
+                        
+                        // Add to stats grid
+                        const isTop = index === 0;
+                        const cardClass = isTop ? 'stat-card good top-dept' : 'stat-card';
+                        const badge = isTop ? '<span class="badge">🏆 Top Performer</span>' : '';
+                        
+                        deptHtml += `
+                            <div class="${cardClass}">
+                                ${badge}
+                                <h4>${dept.department}</h4>
+                                <div class="dept-stat-row">
+                                    <span>Avg Score:</span>
+                                    <span class="stat-value-small">${dept.average_score}</span>
+                                </div>
+                                <div class="dept-stat-row">
+                                    <span>Students:</span>
+                                    <span>${dept.student_count}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    deptHtml += '</div></div>';
+                    
+                    // Insert after main stats
+                    const statsSection = document.querySelector('.stats-section');
+                    if (!document.querySelector('.dept-stats-container')) {
+                        const div = document.createElement('div');
+                        div.innerHTML = deptHtml;
+                        statsSection.appendChild(div);
+                    }
+
+                    // Render Charts
+                    renderCharts(data);
+                }
+            });
+        }
+
+        function renderCharts(data) {
+            // Department Performance Chart
+            const deptCtx = document.getElementById('deptChart').getContext('2d');
+            const deptLabels = data.department_breakdown.map(d => d.department);
+            const deptScores = data.department_breakdown.map(d => d.average_score);
+            const deptColors = deptScores.map(score => score < 50 ? '#e74c3c' : (score > 70 ? '#2ecc71' : '#f39c12'));
+
+            new Chart(deptCtx, {
+                type: 'bar',
+                data: {
+                    labels: deptLabels,
+                    datasets: [{
+                        label: 'Average Score',
+                        data: deptScores,
+                        backgroundColor: deptColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: 'Department Performance' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+
+            // Risk Distribution Chart
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            new Chart(riskCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Good (>70)', 'Average (50-70)', 'At Risk (<50)'],
+                    datasets: [{
+                        data: [
+                            data.performance_distribution.good,
+                            data.performance_distribution.average,
+                            data.performance_distribution.at_risk
+                        ],
+                        backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: 'Student Performance Distribution' }
+                    }
+                }
+            });
+        }
+
+        function exportTableToCSV(filename) {
+            const csv = [];
+            const rows = document.querySelectorAll("table tr");
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll("td, th");
+                
+                for (let j = 0; j < cols.length - 1; j++) // Skip Action column
+                    row.push('"' + cols[j].innerText + '"');
+                
+                csv.push(row.join(","));        
+            }
+
+            downloadCSV(csv.join("\n"), filename);
+        }
+
+        function downloadCSV(csv, filename) {
+            const csvFile = new Blob([csv], {type: "text/csv"});
+            const downloadLink = document.createElement("a");
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+        }
+
+        function loadStudents(year = '', dept = '') {
+            let url = '/api/staff/filter-students?';
+            if (year) url += 'year=' + year + '&';
+            if (dept) url += 'department=' + dept;
+            
+            fetch(url, {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayStudents(data.students);
+            })
+            .catch(error => {
+                document.getElementById('studentTableContainer').innerHTML = 
+                    '<p class="error">Error loading data: ' + error + '</p>';
+            });
+        }
+
+        function displayStudents(students) {
+            let html = '<table class="data-table"><thead><tr>' +
+                '<th>Roll No</th><th>Name</th><th>Department</th><th>Year</th>' +
+                '<th>Current Prediction</th><th>Score</th><th>Action</th></tr></thead><tbody>';
+            
+            students.forEach(student => {
+                const pred = student.current_prediction;
+                const predText = pred ? pred.category : 'N/A';
+                const score = pred ? pred.score : 0;
+                
+                // Highlight scores based on user preference: >70 Green, <50 Red
+                let scoreClass = '';
+                let scoreBadge = '';
+                
+                if (score >= 70) {
+                    scoreClass = 'high-score';
+                    scoreBadge = ' 🌟';
+                } else if (score < 50) {
+                    scoreClass = 'risk-score';
+                    scoreBadge = ' ⚠️';
+                }
+                
+                html += `<tr class="${scoreClass}">
+                    <td>${student.roll_no}</td>
+                    <td>${student.name}</td>
+                    <td>${student.department}</td>
+                    <td>${student.year}</td>
+                    <td>${predText}</td>
+                    <td>${score}${scoreBadge}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewStudentDetails(${student.student_id})">View</button>
+                    </td>
+                    </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('studentTableContainer').innerHTML = html;
+        }
+
+        function viewStudentDetails(studentId) {
+            const modal = document.getElementById('studentModal');
+            const modalBody = document.getElementById('modalStudentBody');
+            modal.style.display = 'block';
+            
+            fetch('/api/staff/student-details/' + studentId, {credentials: 'same-origin'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    modalBody.innerHTML = '<p class="error">' + data.error + '</p>';
+                    return;
+                }
+                
+                currentStudentData = data; // Store for printing
+                
+                document.getElementById('modalStudentName').textContent = data.student.name + ' - Details';
+                
+                let details = '<div class="student-profile-view">';
+                
+                // Basic Info
+                details += '<div class="profile-section-modal"><h4>Personal Info</h4>' +
+                    '<p><strong>Roll No:</strong> ' + data.student.roll_no + '</p>' +
+                    '<p><strong>Department:</strong> ' + data.student.department + '</p>' +
+                    '<p><strong>Year:</strong> ' + data.student.year + '</p>' +
+                    '<p><strong>Email:</strong> ' + data.student.email + '</p></div>';
+                
+                // Predictions
+                if (data.predictions && data.predictions.length > 0) {
+                    details += '<div class="profile-section-modal"><h4>Predictions</h4><ul>';
+                    data.predictions.forEach(p => {
+                        details += `<li>Semester ${p.semester}: <strong>${p.category}</strong> (${p.score}%)</li>`;
+                    });
+                    details += '</ul></div>';
+                }
+                
+                // Certifications
+                if (data.certifications && data.certifications.length > 0) {
+                    details += '<div class="profile-section-modal"><h4>Certifications</h4><ul class="file-list">';
+                    data.certifications.forEach(cert => {
+                        details += `<li>
+                            <span>${cert.title} (${cert.issue_date})</span>
+                            <button class="btn btn-sm" onclick="openFileModal('${cert.file_path}', '${cert.title}')">View Certificate</button>
+                        </li>`;
+                    });
+                    details += '</ul></div>';
+                }
+                
+                // Competitions
+                if (data.competitions && data.competitions.length > 0) {
+                    details += '<div class="profile-section-modal"><h4>Competitions</h4><ul class="file-list">';
+                    data.competitions.forEach(comp => {
+                        details += `<li>
+                            <span>${comp.title} - ${comp.achievement} (${comp.event_date})</span>
+                            <button class="btn btn-sm" onclick="openFileModal('${comp.file_path}', '${comp.title}')">View Record</button>
+                        </li>`;
+                    });
+                    details += '</ul></div>';
+                }
+                
+                details += '</div>';
+                modalBody.innerHTML = details;
+            });
+        }
+
+        function openFileModal(filePath, title) {
+            const modal = document.getElementById('fileViewerModal');
+            const modalTitle = document.getElementById('fileModalTitle');
+            const modalBody = document.getElementById('fileModalBody');
+            
+            modalTitle.textContent = title;
+            modal.style.display = 'block';
+            
+            const ext = filePath.split('.').pop().toLowerCase();
+            let content = '';
+            
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                content = `<img src="${filePath}" alt="${title}" style="max-width: 100%; max-height: 70vh;">`;
+            } else if (ext === 'pdf') {
+                content = `<iframe src="${filePath}" width="100%" height="500px"></iframe>`;
+            } else {
+                content = `<p>File type not supported for preview. <a href="${filePath}" target="_blank">Download</a></p>`;
+            }
+            
+            modalBody.innerHTML = content;
+            currentFileContent = filePath; // For printing logic
+        }
+
+        function printStudentDetails() {
+            if (!currentStudentData) return;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Student Report - ${currentStudentData.student.name}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+                        .section { margin-bottom: 20px; }
+                        .section h3 { background: #f0f2f5; padding: 10px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Student Performance Report</h1>
+                    <div class="section">
+                        <h3>Personal Information</h3>
+                        <p><strong>Name:</strong> ${currentStudentData.student.name}</p>
+                        <p><strong>Roll No:</strong> ${currentStudentData.student.roll_no}</p>
+                        <p><strong>Department:</strong> ${currentStudentData.student.department}</p>
+                    </div>
+                    <!-- Add more sections as needed -->
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function printFile() {
+            const modalBody = document.getElementById('fileModalBody');
+            const content = modalBody.innerHTML;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head><title>Print File</title></head>
+                <body style="text-align: center;">
+                    ${content}
+                    <script>window.onload = function() { window.print(); }<\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        // Filter button
+        document.getElementById('filterBtn').addEventListener('click', function() {
+            const year = document.getElementById('yearFilter').value;
+            const dept = document.getElementById('deptFilter').value;
+            loadStudents(year, dept);
+        });
+
+        // Close Modals
+        document.querySelectorAll('.close, .close-file').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('studentModal').style.display = 'none';
+                document.getElementById('fileViewerModal').style.display = 'none';
+            });
+        });
+
+        // Window click to close
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = "none";
+            }
+        }
+
+        // Load on page load
+        loadStats();
+        loadStudents();
+    </script>
+</body>
+</html>

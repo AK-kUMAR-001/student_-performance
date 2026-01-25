@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Student Performance Predictor</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <ul class="navbar-menu">
+                <li><button class="theme-toggle" onclick="toggleTheme()"><span id="themeIcon">🌙</span> Theme</button></li>
+                <li><span id="welcomeName">Welcome, Student</span></li>
+                <li><a href="#" id="navLogout">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h2>Student Dashboard</h2>
+            <div class="student-info">
+                <p><strong>Name:</strong> <span id="studentName">-</span></p>
+                <p><strong>Roll No:</strong> <span id="studentRoll">-</span></p>
+                <p><strong>Department:</strong> <span id="studentDept">-</span></p>
+                <p><strong>Year:</strong> <span id="studentYear">-</span></p>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="card-icon">📝</div>
+                <h3>Enter Marks</h3>
+                <p>Add your marks semester by semester</p>
+                <a href="/student/marks-entry" class="btn btn-primary">Go to Mark Entry</a>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-icon">🏆</div>
+                <h3>Upload Certificates</h3>
+                <p>Upload your certifications and achievements</p>
+                <a href="/student/certifications" class="btn btn-primary">Go to Upload</a>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-icon">👤</div>
+                <h3>View Profile</h3>
+                <p>View your academic profile and records</p>
+                <a href="/student/profile" class="btn btn-primary">View Profile</a>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-icon">🧮</div>
+                <h3>CGPA Simulator</h3>
+                <p>Calculate "What-If" scenarios for your grades</p>
+                <button onclick="openSimulator()" class="btn btn-primary">Try Simulator</button>
+            </div>
+        </div>
+
+        <div class="quick-summary">
+            <h3>Quick Summary</h3>
+            <div id="summaryContent" class="summary-grid">
+                <div class="summary-item">
+                    <label>Current Prediction:</label>
+                    <span id="currentPred">-</span>
+                </div>
+                <div class="summary-item">
+                    <label>Semesters Completed:</label>
+                    <span id="semesterCount">-</span>
+                </div>
+                <div class="summary-item">
+                    <label>Latest Score:</label>
+                    <span id="latestScore">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <!-- Simulator Modal -->
+    <div id="simulatorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>CGPA "What-If" Simulator</h3>
+                <span class="close" onclick="closeSimulator()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Current Average Score:</label>
+                    <input type="number" id="simCurrentScore" readonly class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Target Semester Score (Next Sem):</label>
+                    <input type="number" id="simTargetScore" placeholder="Enter expected score (0-100)" class="form-control">
+                </div>
+                <div class="form-group">
+                    <button onclick="calculateWhatIf()" class="btn btn-primary btn-block">Calculate New Average</button>
+                </div>
+                <div id="simResult" class="alert-box" style="display:none; margin-top:15px; padding:10px; border-radius:5px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/student.js"></script>
+</body>
+</html>

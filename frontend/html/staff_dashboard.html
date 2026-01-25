@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - Student Performance Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/table.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <ul class="navbar-menu">
+                <li><button class="theme-toggle" onclick="toggleTheme()"><span id="themeIcon">🌙</span> Theme</button></li>
+                <li><span id="staffName">Staff</span></li>
+                <li><a href="#" id="navLogout">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Staff Dashboard - Student Monitoring</h2>
+
+        <div class="search-section">
+            <h3>Search Student</h3>
+            <div class="search-form-group">
+                <input type="text" id="searchRoll" placeholder="Enter Roll Number" class="search-input">
+                <button type="button" id="searchBtn" class="btn btn-primary">Search</button>
+            </div>
+            <div id="searchResult" style="display: none;"></div>
+        </div>
+
+        <div class="filter-section">
+            <h3>Filter Students</h3>
+            <div class="filter-group">
+                <select id="yearFilter">
+                    <option value="">All Years</option>
+                    <option value="1">Year 1</option>
+                    <option value="2">Year 2</option>
+                    <option value="3">Year 3</option>
+                </select>
+                <select id="deptFilter">
+                    <option value="">All Departments</option>
+                </select>
+                <button type="button" id="filterBtn" class="btn btn-secondary">Apply Filter</button>
+                <button type="button" onclick="exportTableToCSV('student_list.csv')" class="btn btn-primary">Export CSV</button>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>Student Performance Overview</h3>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Students</h3>
+                    <p id="totalStudents">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Average Score</h3>
+                    <p id="avgScore">0</p>
+                </div>
+                <div class="stat-card risk-score">
+                    <h3>At Risk (<50)</h3>
+                    <p id="riskCount">0</p>
+                </div>
+            </div>
+
+            <div class="chart-container" style="position: relative; height:300px; width:100%; margin-bottom: 30px;">
+                <canvas id="staffChart"></canvas>
+            </div>
+
+            <div id="studentTableContainer">
+                <p class="loading">Loading student data...</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <!-- File Viewer Modal -->
+    <div id="fileViewerModal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">View File</h3>
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn btn-primary" onclick="printFile()">Print File</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/common.js"></script>
+    <script>
+        // Global data storage
+        let allStudentsData = [];
+
+        function loadStudents() {
+            // Use filter-students to get potentially all students (if allowed) or just department students
+            fetch('/api/staff/filter-students', {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('studentTableContainer').innerHTML = 
+                        '<p class="error">' + data.error + '</p>';
+                    return;
+                }
+
+                allStudentsData = data.students;
+                populateFilters(allStudentsData);
+                displayStudents(allStudentsData);
+            })
+            .catch(error => {
+                document.getElementById('studentTableContainer').innerHTML = 
+                    '<p class="error">Error loading data: ' + error + '</p>';
+            });
+        }
+
+        function populateFilters(students) {
+            const departments = [...new Set(students.map(s => s.department))].sort();
+            const deptSelect = document.getElementById('deptFilter');
+            
+            // Keep "All Departments"
+            deptSelect.innerHTML = '<option value="">All Departments</option>';
+            
+            departments.forEach(dept => {
+                if (dept) {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    deptSelect.appendChild(option);
+                }
+            });
+        }
+
+        // Filter Functionality
+        document.getElementById('filterBtn').addEventListener('click', function() {
+            const year = document.getElementById('yearFilter').value;
+            const dept = document.getElementById('deptFilter').value;
+            
+            let filteredStudents = allStudentsData;
+            
+            if (year) {
+                filteredStudents = filteredStudents.filter(s => s.year.toString() === year);
+            }
+            if (dept) {
+                filteredStudents = filteredStudents.filter(s => s.department === dept);
+            }
+            
+            displayStudents(filteredStudents);
+        });
+
+        function displayStudents(students) {
+            // Calculate Stats
+            const total = students.length;
+            let totalScore = 0;
+            let good = 0, average = 0, risk = 0;
+            let maxScore = -1;
+
+            students.forEach(s => {
+                const score = s.current_prediction ? s.current_prediction.score : 0;
+                totalScore += score;
+                if (score >= 70) good++;
+                else if (score < 50) risk++;
+                else average++;
+                
+                if (score > maxScore) maxScore = score;
+            });
+
+            const avg = total > 0 ? (totalScore / total).toFixed(2) : 0;
+
+            // Update Stats UI if elements exist
+            if (document.getElementById('totalStudents')) document.getElementById('totalStudents').textContent = total;
+            if (document.getElementById('avgScore')) document.getElementById('avgScore').textContent = avg;
+            if (document.getElementById('riskCount')) document.getElementById('riskCount').textContent = risk;
+
+            // Render Chart
+            renderStaffChart(good, average, risk);
+
+            let html = '<table class="data-table"><thead><tr>' +
+                '<th>Roll No</th><th>Name</th><th>Department</th><th>Year</th>' +
+                '<th>Current Prediction</th><th>Score</th><th>Action</th></tr></thead><tbody>';
+            
+            if (students.length === 0) {
+                html += '<tr><td colspan="7" style="text-align:center;">No students found</td></tr>';
+            } else {
+                students.forEach(student => {
+                    const pred = student.current_prediction;
+                    const predText = pred ? pred.category : 'N/A';
+                    const score = pred ? pred.score : 0;
+                    
+                    // Highlight scores based on user preference: >70 Green, <50 Red
+                    let scoreClass = '';
+                    let scoreBadge = '';
+                    
+                    if (score >= 70) {
+                        scoreClass = 'high-score';
+                        scoreBadge = ' 🌟';
+                        if (score === maxScore && maxScore > 0) {
+                            scoreBadge += ' 🏆'; // Top performer badge
+                        }
+                    } else if (score < 50) {
+                        scoreClass = 'risk-score';
+                        scoreBadge = ' ⚠️';
+                    }
+                    
+                    html += '<tr class="' + scoreClass + '">' +
+                        '<td>' + student.roll_no + '</td>' +
+                        '<td>' + student.name + '</td>' +
+                        '<td>' + student.department + '</td>' +
+                        '<td>' + student.year + '</td>' +
+                        '<td>' + predText + '</td>' +
+                        '<td>' + (pred ? score : '-') + scoreBadge + '</td>' +
+                        '<td><button class="btn btn-sm" onclick="viewStudentDetails(' + student.student_id + ')">View</button></td>' +
+                        '</tr>';
+                });
+            }
+            
+            html += '</tbody></table>';
+            document.getElementById('studentTableContainer').innerHTML = html;
+        }
+
+        let staffChartInstance = null;
+
+        function renderStaffChart(good, average, risk) {
+            const ctx = document.getElementById('staffChart');
+            if (!ctx) return; // Guard clause if chart element doesn't exist
+            
+            const context = ctx.getContext('2d');
+            
+            if (staffChartInstance) {
+                staffChartInstance.destroy();
+            }
+
+            // Don't render if no data
+            if (good === 0 && average === 0 && risk === 0) {
+                return;
+            }
+
+            staffChartInstance = new Chart(context, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Good (>70)', 'Average (50-70)', 'At Risk (<50)'],
+                    datasets: [{
+                        data: [good, average, risk],
+                        backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: 'Student Performance Distribution' }
+                    }
+                }
+            });
+        }
+
+        function viewStudentDetails(studentId) {
+            fetch('/api/staff/student-details/' + studentId, {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                let details = '<div class="student-detail-modal">' +
+                    '<h3>' + data.student.name + ' (' + data.student.roll_no + ')</h3>' +
+                    '<p><strong>Department:</strong> ' + data.student.department + '</p>' +
+                    '<p><strong>Year:</strong> ' + data.student.year + '</p>' +
+                    '<p><strong>Email:</strong> ' + data.student.email + '</p>';
+                
+                if (data.predictions && data.predictions.length > 0) {
+                    details += '<h4>Predictions:</h4><ul>';
+                    data.predictions.forEach(pred => {
+                        details += '<li>Sem ' + pred.semester + ': ' + pred.category + ' (' + pred.score + ')</li>';
+                    });
+                    details += '</ul>';
+                }
+                
+                if (data.certifications && data.certifications.length > 0) {
+                    details += '<h4>Certifications:</h4><ul>';
+                    data.certifications.forEach(cert => {
+                        details += '<li>' + cert.title + ' - <button class="btn btn-sm" onclick="openModal(\'' + cert.file_path + '\', \'' + cert.title.replace(/'/g, "\\'") + '\')">View</button></li>';
+                    });
+                    details += '</ul>';
+                }
+                
+                if (data.competitions && data.competitions.length > 0) {
+                    details += '<h4>Competitions:</h4><ul>';
+                    data.competitions.forEach(comp => {
+                        details += '<li>' + comp.title + ' (' + comp.achievement + ') - <button class="btn btn-sm" onclick="openModal(\'' + comp.file_path + '\', \'' + comp.title.replace(/'/g, "\\'") + '\')">View</button></li>';
+                    });
+                    details += '</ul>';
+                }
+
+                details += '<div style="margin-top: 20px;"><button class="btn btn-secondary" onclick="loadStudents()">Back to List</button></div>';
+                
+                details += '</div>';
+                document.getElementById('studentTableContainer').innerHTML = details;
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            const rollNo = document.getElementById('searchRoll').value;
+            if (!rollNo) {
+                alert('Please enter a roll number');
+                return;
+            }
+            
+            fetch('/api/staff/search-student?roll_no=' + rollNo, {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('searchResult').innerHTML = 
+                        '<p class="error">' + data.error + '</p>';
+                    document.getElementById('searchResult').style.display = 'block';
+                } else {
+                    document.getElementById('searchResult').innerHTML = 
+                        '<p class="success">Found: ' + data.name + ' (' + data.roll_no + ')</p>';
+                    document.getElementById('searchResult').style.display = 'block';
+                    viewStudentDetails(data.student_id);
+                }
+            });
+        });
+
+        // Load students on page load
+        loadStudents();
+
+        // Modal Functions
+        function exportTableToCSV(filename) {
+            const csv = [];
+            const rows = document.querySelectorAll("table tr");
+            
+            if (rows.length === 0) {
+                alert("No data to export");
+                return;
+            }
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll("td, th");
+                
+                for (let j = 0; j < cols.length - 1; j++) // Skip Action column
+                    row.push('"' + cols[j].innerText + '"');
+                
+                csv.push(row.join(","));        
+            }
+
+            downloadCSV(csv.join("\n"), filename);
+        }
+
+        function downloadCSV(csv, filename) {
+            const csvFile = new Blob([csv], {type: "text/csv"});
+            const downloadLink = document.createElement("a");
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+        }
+
+        function openModal(filePath, title) {
+            const modal = document.getElementById('fileViewerModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalTitle.textContent = title || 'View File';
+            modalBody.innerHTML = '<p class="loading">Loading file...</p>';
+            modal.style.display = 'block';
+            
+            // Determine file type
+            const extension = filePath.split('.').pop().toLowerCase();
+            let content = '';
+            
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+                content = '<img src="' + filePath + '" class="modal-img" alt="Certificate" style="max-width:100%; max-height:60vh;">';
+            } else if (extension === 'pdf') {
+                content = '<iframe src="' + filePath + '" class="modal-iframe" width="100%" height="500px"></iframe>';
+            } else {
+                content = '<p>This file type cannot be previewed directly. <a href="' + filePath + '" target="_blank">Download File</a></p>';
+            }
+            
+            modalBody.innerHTML = content;
+        }
+
+        function printFile() {
+            const modalBody = document.getElementById('modalBody');
+            const content = modalBody.innerHTML;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head><title>Print File</title></head>
+                <body style="text-align: center;">
+                    ${content}
+                    <script>window.onload = function() { window.print(); }<\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        function closeModal() {
+            document.getElementById('fileViewerModal').style.display = 'none';
+            document.getElementById('modalBody').innerHTML = '';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('fileViewerModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

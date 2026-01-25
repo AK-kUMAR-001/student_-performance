@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login - Student Performance Predictor</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/forms.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <a href="/" class="btn-small">Back to Home</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="form-wrapper">
+            <h2>Student Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="rollNo">Roll Number *</label>
+                    <input type="text" id="rollNo" name="roll_no" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+
+            <p class="text-center">Don't have an account? <a href="/student/signup">Sign up here</a></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <script src="/js/common.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                roll_no: document.getElementById('rollNo').value,
+                password: document.getElementById('password').value
+            };
+            
+            const errorDiv = document.getElementById('errorMessage');
+            
+            fetch('/api/auth/student/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData),
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                } else {
+                    // Store user info in sessionStorage
+                    sessionStorage.setItem('student_id', data.student_id);
+                    sessionStorage.setItem('name', data.name);
+                    sessionStorage.setItem('roll_no', data.roll_no);
+                    sessionStorage.setItem('department', data.department);
+                    sessionStorage.setItem('year', data.year);
+                    
+                    window.location.href = '/student/dashboard';
+                }
+            })
+            .catch(error => {
+                errorDiv.textContent = 'An error occurred: ' + error;
+                errorDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

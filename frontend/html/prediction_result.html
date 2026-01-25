@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Results - Student Performance Predictor</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/table.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <a href="/student/dashboard" class="btn-small">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Your Performance Predictions</h2>
+
+        <div class="form-group">
+            <label for="semesterFilter">Filter by Semester:</label>
+            <select id="semesterFilter">
+                <option value="">All Semesters</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+                <option value="3">Semester 3</option>
+                <option value="4">Semester 4</option>
+                <option value="5">Semester 5</option>
+                <option value="6">Semester 6</option>
+            </select>
+        </div>
+
+        <div id="predictionContent">
+            <div class="no-data">
+                <p>No predictions available. Please enter your marks first.</p>
+                <a href="/student/marks-entry" class="btn btn-primary">Go to Mark Entry</a>
+            </div>
+        </div>
+
+        <div id="predictionHistory" style="display: none;">
+            <h3>Prediction History</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Semester</th>
+                        <th>Prediction Category</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/prediction.js"></script>
+</body>
+</html>

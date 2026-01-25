@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certifications - Student Performance Predictor</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <a href="/student/dashboard" class="btn-small">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Upload Certifications & Competitions</h2>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="certificates">📜 Certificates</button>
+            <button class="tab-btn" data-tab="competitions">🏆 Competitions</button>
+        </div>
+
+        <!-- CERTIFICATE UPLOAD TAB -->
+        <div id="certificates" class="tab-content active">
+            <div class="form-wrapper">
+                <h3>Upload Certificate</h3>
+                <form id="certificateForm">
+                    <div class="form-group">
+                        <label for="certTitle">Certificate Title *</label>
+                        <input type="text" id="certTitle" name="cert_title" placeholder="e.g., AWS Certification" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="certFile">Certificate File (Image/PDF) *</label>
+                        <input type="file" id="certFile" name="file" accept=".pdf,.jpg,.jpeg,.png,.gif" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="certDate">Issue Date *</label>
+                        <input type="date" id="certDate" name="issue_date" required>
+                    </div>
+
+                    <div id="certErrorMessage" class="error-message" style="display: none;"></div>
+                    <div id="certSuccessMessage" class="success-message" style="display: none;"></div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Upload Certificate</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h3>Your Certificates</h3>
+                <div id="certificatesList">
+                    <p>No certificates uploaded yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPETITION UPLOAD TAB -->
+        <div id="competitions" class="tab-content">
+            <div class="form-wrapper">
+                <h3>Upload Competition/Achievement</h3>
+                <form id="competitionForm">
+                    <div class="form-group">
+                        <label for="compTitle">Competition Title *</label>
+                        <input type="text" id="compTitle" name="comp_title" placeholder="e.g., National Hackathon 2026" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="achievementType">Achievement Type *</label>
+                        <select id="achievementType" name="achievement_type" required>
+                            <option value="">-- Select Type --</option>
+                            <option value="Participant">Participant</option>
+                            <option value="Winner">Winner</option>
+                            <option value="Runner-up">Runner-up</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="compFile">Certificate/Evidence File *</label>
+                        <input type="file" id="compFile" name="file" accept=".pdf,.jpg,.jpeg,.png,.gif" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="compDate">Event Date *</label>
+                        <input type="date" id="compDate" name="event_date" required>
+                    </div>
+
+                    <div id="compErrorMessage" class="error-message" style="display: none;"></div>
+                    <div id="compSuccessMessage" class="success-message" style="display: none;"></div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Upload Competition Record</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h3>Your Competitions & Achievements</h3>
+                <div id="competitionsList">
+                    <p>No competitions recorded yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/student.js"></script>
+    <script>
+        // Load certificates and competitions on page load
+        function loadCertificates() {
+            fetch('/api/student/get-certifications', {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('certificatesList');
+                if (data.certifications && data.certifications.length > 0) {
+                    let html = '<div class="item-list">';
+                    data.certifications.forEach(cert => {
+                        html += `
+                            <div class="item-card">
+                                <h4>${cert.title}</h4>
+                                <p><strong>Issue Date:</strong> ${formatDateReadable(cert.issue_date)}</p>
+                                <p><strong>Upload Date:</strong> ${formatDateReadable(cert.upload_date)}</p>
+                                <a href="${cert.file_path}" target="_blank" class="btn btn-sm btn-primary">View Document</a>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p>No certificates uploaded yet.</p>';
+                }
+            });
+        }
+
+        function loadCompetitions() {
+            fetch('/api/student/get-competitions', {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('competitionsList');
+                if (data.competitions && data.competitions.length > 0) {
+                    let html = '<div class="item-list">';
+                    data.competitions.forEach(comp => {
+                        html += `
+                            <div class="item-card">
+                                <h4>${comp.title}</h4>
+                                <p><strong>Achievement:</strong> ${comp.achievement_type}</p>
+                                <p><strong>Event Date:</strong> ${formatDateReadable(comp.event_date)}</p>
+                                <a href="${comp.file_path}" target="_blank" class="btn btn-sm btn-primary">View Evidence</a>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p>No competitions recorded yet.</p>';
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCertificates();
+            loadCompetitions();
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-tab');
+                
+                // Hide all tabs
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Remove active from all buttons
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                
+                // Show selected tab
+                document.getElementById(tabName).classList.add('active');
+                this.classList.add('active');
+            });
+        });
+
+        // Certificate upload
+        document.getElementById('certificateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('cert_title', document.getElementById('certTitle').value);
+            formData.append('file', document.getElementById('certFile').files[0]);
+            formData.append('issue_date', document.getElementById('certDate').value);
+            
+            const errorDiv = document.getElementById('certErrorMessage');
+            const successDiv = document.getElementById('certSuccessMessage');
+            
+            fetch('/api/student/upload-certificate', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                } else {
+                    successDiv.textContent = 'Certificate uploaded successfully!';
+                    successDiv.style.display = 'block';
+                    document.getElementById('certificateForm').reset();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            })
+            .catch(error => {
+                errorDiv.textContent = 'An error occurred: ' + error;
+                errorDiv.style.display = 'block';
+            });
+        });
+
+        // Competition upload
+        document.getElementById('competitionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('comp_title', document.getElementById('compTitle').value);
+            formData.append('achievement_type', document.getElementById('achievementType').value);
+            formData.append('file', document.getElementById('compFile').files[0]);
+            formData.append('event_date', document.getElementById('compDate').value);
+            
+            const errorDiv = document.getElementById('compErrorMessage');
+            const successDiv = document.getElementById('compSuccessMessage');
+            
+            fetch('/api/student/upload-competition', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                } else {
+                    successDiv.textContent = 'Competition record uploaded successfully!';
+                    successDiv.style.display = 'block';
+                    document.getElementById('competitionForm').reset();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            })
+            .catch(error => {
+                errorDiv.textContent = 'An error occurred: ' + error;
+                errorDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

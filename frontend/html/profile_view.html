@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile View - Student Performance Predictor</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/table.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="navbar-logo">📊 Student Performance Predictor</h1>
+            <a href="/student/dashboard" class="btn-small">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>My Academic Profile</h2>
+
+        <div class="profile-section">
+            <h3>Personal Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Name:</label>
+                    <span id="profileName">-</span>
+                </div>
+                <div class="info-item">
+                    <label>Roll Number:</label>
+                    <span id="profileRoll">-</span>
+                </div>
+                <div class="info-item">
+                    <label>Department:</label>
+                    <span id="profileDept">-</span>
+                </div>
+                <div class="info-item">
+                    <label>Year:</label>
+                    <span id="profileYear">-</span>
+                </div>
+                <div class="info-item">
+                    <label>Email:</label>
+                    <span id="profileEmail">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h3>� Marks History</h3>
+            <div id="marksHistoryContent">
+                <p>No marks entered yet.</p>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h3>🎯 Performance Predictions</h3>
+            <div id="predictionsContent">
+                <p>No predictions available yet.</p>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h3>�📜 Certifications</h3>
+            <div id="certificationsContent">
+                <p>No certifications uploaded yet.</p>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h3>🏆 Competitions & Achievements</h3>
+            <div id="competitionsContent">
+                <p>No competitions recorded yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Student Performance Predictor</p>
+    </footer>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/student.js"></script>
+</body>
+</html>
