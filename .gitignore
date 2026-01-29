@@ -3,7 +3,6 @@ __pycache__/
 instance/
 .env
 *.pyc
-*.pyo
 *.pyd
 .DS_Store
 database.db
